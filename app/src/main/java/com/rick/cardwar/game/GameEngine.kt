@@ -34,8 +34,8 @@ object GameEngine {
     fun startMatch(state: GameState, random: Random = Random.Default): GameState {
         val cards = Deck.shuffled(random).toMutableList()
         val center = cards.removeAt(0)
-        val player1 = cards.take(GameRules.HandSize)
-        val player2 = cards.drop(GameRules.HandSize).take(GameRules.HandSize)
+        val player1 = cards.take(GameRules.HAND_SIZE)
+        val player2 = cards.drop(GameRules.HAND_SIZE).take(GameRules.HAND_SIZE)
         return state.copy(
             status = GameStatus.Playing,
             board = mapOf(
@@ -45,8 +45,8 @@ object GameEngine {
             player2Hand = player2,
             currentPlayer = PlayerId.One,
             selectedCardId = null,
-            p1Score = GameRules.StartingScore,
-            p2Score = GameRules.StartingScore,
+            p1Score = GameRules.STARTING_SCORE,
+            p2Score = GameRules.STARTING_SCORE,
             placementsThisMatch = 0,
             lastCapturedSlots = emptyList(),
             lastPlacedSlot = null,
@@ -98,7 +98,7 @@ object GameEngine {
 
         val newHand = state.handOf(player).filter { it.id != id }
         val placements = state.placementsThisMatch + 1
-        val finished = placements >= GameRules.PlacementsPerMatch
+        val finished = placements >= GameRules.PLACEMENTS_PER_MATCH
 
         var p1Wins = state.p1GamesWon
         var p2Wins = state.p2GamesWon

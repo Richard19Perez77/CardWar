@@ -9,21 +9,21 @@ import android.media.ToneGenerator
  */
 class GameSoundPlayer : GameSounds {
     private val toneGenerator = try {
-        ToneGenerator(AudioManager.STREAM_MUSIC, ToneVolume)
+        ToneGenerator(AudioManager.STREAM_MUSIC, TONE_VOLUME)
     } catch (_: RuntimeException) {
         null
     }
 
     override fun playSelected(enabled: Boolean) {
-        play(ToneGenerator.TONE_PROP_BEEP, SelectDurationMs, enabled)
+        play(ToneGenerator.TONE_PROP_BEEP, SELECT_DURATION_MS, enabled)
     }
 
     override fun playPlaced(enabled: Boolean) {
-        play(ToneGenerator.TONE_PROP_BEEP2, PlaceDurationMs, enabled)
+        play(ToneGenerator.TONE_PROP_BEEP2, PLACE_DURATION_MS, enabled)
     }
 
     override fun playTurned(enabled: Boolean) {
-        play(ToneGenerator.TONE_PROP_ACK, CaptureDurationMs, enabled)
+        play(ToneGenerator.TONE_PROP_ACK, CAPTURE_DURATION_MS, enabled)
     }
 
     private fun play(tone: Int, durationMs: Int, enabled: Boolean) {
@@ -40,9 +40,9 @@ class GameSoundPlayer : GameSounds {
     }
 
     private companion object {
-        const val ToneVolume = 70
-        const val SelectDurationMs = 90
-        const val PlaceDurationMs = 80
-        const val CaptureDurationMs = 160
+        const val TONE_VOLUME = 70
+        const val SELECT_DURATION_MS = 90
+        const val PLACE_DURATION_MS = 80
+        const val CAPTURE_DURATION_MS = 160
     }
 }

@@ -5,7 +5,7 @@ package com.rick.cardwar.game.model
  * The board has nine slots; the center is dealt face up, leaving eight placements.
  */
 object GameRules {
-    const val HandSize = 5
-    const val StartingScore = 5
-    const val PlacementsPerMatch = 8
+    const val HAND_SIZE = 5
+    const val STARTING_SCORE = 5
+    const val PLACEMENTS_PER_MATCH = 8
 }
