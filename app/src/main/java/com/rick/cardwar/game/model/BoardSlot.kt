@@ -1,15 +1,15 @@
 package com.rick.cardwar.game.model
 
-enum class BoardSlot(val row: Int, val column: Int) {
-    TopLeft(0, 0),
-    TopCenter(0, 1),
-    TopRight(0, 2),
-    CenterLeft(1, 0),
-    Center(1, 1),
-    CenterRight(1, 2),
-    BottomLeft(2, 0),
-    BottomCenter(2, 1),
-    BottomRight(2, 2);
+enum class BoardSlot {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    CenterLeft,
+    Center,
+    CenterRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight;
 
     val orthogonalNeighbors: List<BoardSlot>
         get() = when (this) {

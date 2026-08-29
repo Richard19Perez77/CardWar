@@ -14,9 +14,4 @@ enum class Rank(val value: Int) {
     Queen(12),
     King(13),
     Ace(14);
-
-    companion object {
-        fun fromValue(value: Int): Rank =
-            entries.first { it.value == value }
-    }
 }
