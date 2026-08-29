@@ -42,6 +42,8 @@ import com.rick.cardwar.game.model.PlayerId
 import com.rick.cardwar.ui.components.BoardGrid
 import com.rick.cardwar.ui.components.GameHud
 import com.rick.cardwar.ui.components.HandLayout
+import com.rick.cardwar.ui.components.HandPanel
+import com.rick.cardwar.ui.components.PlayAreaLayout
 import com.rick.cardwar.ui.components.PlayerHand
 import com.rick.cardwar.ui.theme.CardWarTheme
 import com.rick.cardwar.ui.theme.HudScrim
@@ -110,15 +112,17 @@ fun GameScreenContent(
             ) {
                 val landscape = maxWidth > maxHeight
                 if (landscape) {
+                    val cardSize = PlayAreaLayout.landscapeCardSize(maxWidth, maxHeight)
                     Row(
                         modifier = Modifier.fillMaxSize(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
+                        HandPanel(
+                            player = PlayerId.One,
+                            active = player1Active,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight(),
-                            contentAlignment = Alignment.Center,
                         ) {
                             PlayerHand(
                                 cards = state.player1Hand,
@@ -127,6 +131,7 @@ fun GameScreenContent(
                                 isCurrentPlayer = player1Active,
                                 layout = HandLayout.GridThreeTwo,
                                 onCardClick = onCardClick,
+                                cardSize = cardSize,
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
@@ -135,16 +140,18 @@ fun GameScreenContent(
                             hasSelection = state.selectedCardId != null,
                             interactive = boardInteractive,
                             onSlotClick = onSlotClick,
+                            cardSize = cardSize,
                             modifier = Modifier
                                 .fillMaxHeight()
                                 .wrapContentWidth()
-                                .padding(horizontal = 8.dp),
+                                .padding(horizontal = 12.dp),
                         )
-                        Box(
+                        HandPanel(
+                            player = PlayerId.Two,
+                            active = player2Active,
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight(),
-                            contentAlignment = Alignment.Center,
                         ) {
                             PlayerHand(
                                 cards = state.player2Hand,
@@ -154,50 +161,65 @@ fun GameScreenContent(
                                 layout = HandLayout.GridThreeTwo,
                                 faceDown = state.cpuOpponent,
                                 onCardClick = onCardClick,
+                                cardSize = cardSize,
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
                     }
                 } else {
+                    val cardSize = PlayAreaLayout.portraitCardSize(maxWidth, maxHeight)
                     Column(
                         modifier = Modifier.fillMaxSize(),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        PlayerHand(
-                            cards = state.player2Hand,
+                        HandPanel(
                             player = PlayerId.Two,
-                            selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = player2Active,
-                            layout = HandLayout.Row,
-                            faceDown = state.cpuOpponent,
-                            onCardClick = onCardClick,
+                            active = player2Active,
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                        )
+                                .fillMaxWidth(),
+                        ) {
+                            PlayerHand(
+                                cards = state.player2Hand,
+                                player = PlayerId.Two,
+                                selectedCardId = state.selectedCardId,
+                                isCurrentPlayer = player2Active,
+                                layout = HandLayout.Row,
+                                faceDown = state.cpuOpponent,
+                                onCardClick = onCardClick,
+                                cardSize = cardSize,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                         BoardGrid(
                             board = state.board,
                             hasSelection = state.selectedCardId != null,
                             interactive = boardInteractive,
                             onSlotClick = onSlotClick,
+                            cardSize = cardSize,
                             modifier = Modifier
                                 .weight(2.2f)
                                 .fillMaxWidth()
-                                .padding(4.dp),
+                                .padding(horizontal = 8.dp, vertical = 4.dp),
                         )
-                        PlayerHand(
-                            cards = state.player1Hand,
+                        HandPanel(
                             player = PlayerId.One,
-                            selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = player1Active,
-                            layout = HandLayout.Row,
-                            onCardClick = onCardClick,
+                            active = player1Active,
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                        )
+                                .fillMaxWidth(),
+                        ) {
+                            PlayerHand(
+                                cards = state.player1Hand,
+                                player = PlayerId.One,
+                                selectedCardId = state.selectedCardId,
+                                isCurrentPlayer = player1Active,
+                                layout = HandLayout.Row,
+                                onCardClick = onCardClick,
+                                cardSize = cardSize,
+                                modifier = Modifier.fillMaxSize(),
+                            )
+                        }
                     }
                 }
             }

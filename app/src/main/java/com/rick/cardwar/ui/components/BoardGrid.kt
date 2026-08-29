@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.rick.cardwar.game.model.BoardSlot
 import com.rick.cardwar.game.model.PlacedCard
@@ -22,19 +23,25 @@ fun BoardGrid(
     interactive: Boolean,
     onSlotClick: (BoardSlot) -> Unit,
     modifier: Modifier = Modifier,
+    cardSize: DpSize? = null,
 ) {
     BoxWithConstraints(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        val gap = 6.dp
-        val maxCardHeight = (maxHeight - gap * 2) / 3
-        var cardHeight = maxCardHeight
-        var cardWidth = cardHeight * CardAspectRatio
-        val gridWidth = cardWidth * 3 + gap * 2
-        if (gridWidth > maxWidth) {
-            cardWidth = (maxWidth - gap * 2) / 3
-            cardHeight = cardWidth / CardAspectRatio
+        val gap = PlayAreaLayout.SlotGap
+        val (cardWidth, cardHeight) = if (cardSize != null) {
+            cardSize.width to cardSize.height
+        } else {
+            val maxCardHeight = (maxHeight - gap * 2) / 3
+            var height = maxCardHeight
+            var width = height * CardAspectRatio
+            val gridWidth = width * 3 + gap * 2
+            if (gridWidth > maxWidth) {
+                width = (maxWidth - gap * 2) / 3
+                height = width / CardAspectRatio
+            }
+            width to height
         }
 
         Column(
