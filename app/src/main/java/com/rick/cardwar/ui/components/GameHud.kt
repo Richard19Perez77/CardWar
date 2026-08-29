@@ -8,9 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
@@ -22,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.rick.cardwar.R
@@ -71,7 +69,9 @@ fun GameHud(
         HudSlot {
             IconButton(onClick = onSoundToggle, modifier = Modifier.size(40.dp)) {
                 Icon(
-                    imageVector = if (soundEnabled) Icons.Filled.VolumeUp else Icons.Filled.VolumeOff,
+                    painter = painterResource(
+                        if (soundEnabled) R.drawable.ic_volume_up else R.drawable.ic_volume_off,
+                    ),
                     contentDescription = stringResource(R.string.sound),
                     tint = MaterialTheme.colorScheme.primary,
                 )

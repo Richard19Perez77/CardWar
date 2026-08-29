@@ -1,9 +1,9 @@
 package com.rick.cardwar.ui
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rick.cardwar.audio.GameSoundPlayer
+import com.rick.cardwar.audio.GameSounds
 import com.rick.cardwar.game.GameAction
 import com.rick.cardwar.game.GameEngine
 import com.rick.cardwar.game.ai.CpuAi
@@ -18,8 +18,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class GameViewModel(application: Application) : AndroidViewModel(application) {
-    private val sounds = GameSoundPlayer()
+class GameViewModel(
+    private val sounds: GameSounds = GameSoundPlayer(),
+) : ViewModel() {
+
     private val _state = MutableStateFlow(GameState())
     val state: StateFlow<GameState> = _state.asStateFlow()
 
@@ -30,66 +32,72 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun startGame() {
         cpuJob?.cancel()
-        _state.value = GameEngine.startMatch(_state.value)
+        dispatch(GameAction.StartMatch())
     }
 
     fun selectCard(cardId: Int) {
-        val before = _state.value
-        val after = GameEngine.selectCard(before, cardId)
-        if (after.selectedCardId != null && after.selectedCardId != before.selectedCardId) {
-            sounds.playSelected(_soundEnabled.value)
-        }
-        _state.value = after
+        dispatch(GameAction.SelectCard(cardId))
     }
 
     fun tapSlot(slot: BoardSlot) {
-        val before = _state.value
-        val after = GameEngine.place(before, slot)
-        if (after.placementsThisMatch == before.placementsThisMatch) return
-        _state.value = after
-        if (after.lastCapturedSlots.isNotEmpty()) {
-            sounds.playTurned(_soundEnabled.value)
-        } else {
-            sounds.playPlaced(_soundEnabled.value)
-        }
-        maybePlayCpuTurn()
+        if (!dispatch(GameAction.Place(slot))) return
+        scheduleCpuTurn()
     }
 
     fun setCpuEnabled(enabled: Boolean) {
-        _state.value = GameEngine.reduce(_state.value, GameAction.SetCpu(enabled))
-        maybePlayCpuTurn()
+        dispatch(GameAction.SetCpu(enabled))
+        scheduleCpuTurn()
     }
 
     fun toggleSound() {
         _soundEnabled.value = !_soundEnabled.value
     }
 
-    private fun maybePlayCpuTurn() {
+    /**
+     * Applies [action] through the engine. Returns false when the engine rejected it,
+     * which it signals by handing back the same state instance.
+     */
+    private fun dispatch(action: GameAction): Boolean {
+        val before = _state.value
+        val after = GameEngine.reduce(before, action)
+        if (after === before) return false
+        _state.value = after
+        playFeedback(before, after)
+        return true
+    }
+
+    private fun playFeedback(before: GameState, after: GameState) {
+        val enabled = _soundEnabled.value
+        when {
+            after.placementsThisMatch > before.placementsThisMatch ->
+                if (after.lastCapturedSlots.isEmpty()) {
+                    sounds.playPlaced(enabled)
+                } else {
+                    sounds.playTurned(enabled)
+                }
+
+            after.selectedCardId != null && after.selectedCardId != before.selectedCardId ->
+                sounds.playSelected(enabled)
+        }
+    }
+
+    private fun scheduleCpuTurn() {
         cpuJob?.cancel()
-        val snapshot = _state.value
-        if (!snapshot.cpuOpponent) return
-        if (snapshot.status != GameStatus.Playing) return
-        if (snapshot.currentPlayer != PlayerId.Two) return
+        if (!isCpuTurn(_state.value)) return
 
         cpuJob = viewModelScope.launch {
             delay(CpuTurnDelayMs)
             val current = _state.value
-            if (!current.cpuOpponent ||
-                current.status != GameStatus.Playing ||
-                current.currentPlayer != PlayerId.Two
-            ) {
-                return@launch
-            }
+            if (!isCpuTurn(current)) return@launch
             val move = CpuAi.chooseMove(current) ?: return@launch
-            val after = GameEngine.place(current, move.slot, move.cardId)
-            _state.value = after
-            if (after.lastCapturedSlots.isNotEmpty()) {
-                sounds.playTurned(_soundEnabled.value)
-            } else {
-                sounds.playPlaced(_soundEnabled.value)
-            }
+            dispatch(GameAction.Place(move.slot, move.cardId))
         }
     }
+
+    private fun isCpuTurn(state: GameState): Boolean =
+        state.cpuOpponent &&
+            state.status == GameStatus.Playing &&
+            state.currentPlayer == PlayerId.Two
 
     override fun onCleared() {
         cpuJob?.cancel()

@@ -16,4 +16,5 @@
     <string name="ok">OK!</string>
     <string name="good_luck">Good Luck!</string>
     <string name="empty_slot">Empty slot</string>
+    <string name="face_down_card">Face-down card</string>
 </resources>

@@ -74,6 +74,10 @@ fun GameScreenContent(
 ) {
     var showRules by remember { mutableStateOf(false) }
     val playing = state.status == GameStatus.Playing
+    val cpuThinking = state.cpuOpponent && state.currentPlayer == PlayerId.Two
+    val boardInteractive = playing && !cpuThinking
+    val player1Active = playing && state.currentPlayer == PlayerId.One
+    val player2Active = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent
 
     Box(modifier.fillMaxSize()) {
         Image(
@@ -110,7 +114,7 @@ fun GameScreenContent(
                             cards = state.player1Hand,
                             player = PlayerId.One,
                             selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = playing && state.currentPlayer == PlayerId.One,
+                            isCurrentPlayer = player1Active,
                             vertical = true,
                             onCardClick = onCardClick,
                             modifier = Modifier
@@ -120,8 +124,8 @@ fun GameScreenContent(
                         )
                         BoardGrid(
                             board = state.board,
-                            selectedCardId = state.selectedCardId,
-                            interactive = playing && !(state.cpuOpponent && state.currentPlayer == PlayerId.Two),
+                            hasSelection = state.selectedCardId != null,
+                            interactive = boardInteractive,
                             onSlotClick = onSlotClick,
                             modifier = Modifier
                                 .weight(1.8f)
@@ -132,7 +136,7 @@ fun GameScreenContent(
                             cards = state.player2Hand,
                             player = PlayerId.Two,
                             selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent,
+                            isCurrentPlayer = player2Active,
                             vertical = true,
                             faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
@@ -151,7 +155,7 @@ fun GameScreenContent(
                             cards = state.player2Hand,
                             player = PlayerId.Two,
                             selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent,
+                            isCurrentPlayer = player2Active,
                             vertical = false,
                             faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
@@ -162,8 +166,8 @@ fun GameScreenContent(
                         )
                         BoardGrid(
                             board = state.board,
-                            selectedCardId = state.selectedCardId,
-                            interactive = playing && !(state.cpuOpponent && state.currentPlayer == PlayerId.Two),
+                            hasSelection = state.selectedCardId != null,
+                            interactive = boardInteractive,
                             onSlotClick = onSlotClick,
                             modifier = Modifier
                                 .weight(2.2f)
@@ -174,7 +178,7 @@ fun GameScreenContent(
                             cards = state.player1Hand,
                             player = PlayerId.One,
                             selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = playing && state.currentPlayer == PlayerId.One,
+                            isCurrentPlayer = player1Active,
                             vertical = false,
                             onCardClick = onCardClick,
                             modifier = Modifier

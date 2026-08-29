@@ -1,6 +1,7 @@
 package com.rick.cardwar.game
 
 import com.rick.cardwar.game.model.BoardSlot
+import com.rick.cardwar.game.model.GameRules
 import com.rick.cardwar.game.model.GameState
 import com.rick.cardwar.game.model.GameStatus
 import com.rick.cardwar.game.model.PlacedCard
@@ -15,10 +16,13 @@ sealed interface GameAction {
     data class SetCpu(val enabled: Boolean) : GameAction
 }
 
+/**
+ * Pure rules engine. Every transition is `(GameState, GameAction) -> GameState`.
+ *
+ * An action the rules reject returns the *same* state instance, so callers can detect
+ * an illegal move with an identity check rather than diffing fields.
+ */
 object GameEngine {
-
-    const val PlacementsPerMatch = 8
-    const val StartingScore = 5
 
     fun reduce(state: GameState, action: GameAction): GameState = when (action) {
         is GameAction.StartMatch -> startMatch(state, action.random)
@@ -30,8 +34,8 @@ object GameEngine {
     fun startMatch(state: GameState, random: Random = Random.Default): GameState {
         val cards = Deck.shuffled(random).toMutableList()
         val center = cards.removeAt(0)
-        val player1 = cards.take(5)
-        val player2 = cards.drop(5).take(5)
+        val player1 = cards.take(GameRules.HandSize)
+        val player2 = cards.drop(GameRules.HandSize).take(GameRules.HandSize)
         return state.copy(
             status = GameStatus.Playing,
             board = mapOf(
@@ -41,8 +45,8 @@ object GameEngine {
             player2Hand = player2,
             currentPlayer = PlayerId.One,
             selectedCardId = null,
-            p1Score = StartingScore,
-            p2Score = StartingScore,
+            p1Score = GameRules.StartingScore,
+            p2Score = GameRules.StartingScore,
             placementsThisMatch = 0,
             lastCapturedSlots = emptyList(),
             lastPlacedSlot = null,
@@ -94,7 +98,7 @@ object GameEngine {
 
         val newHand = state.handOf(player).filter { it.id != id }
         val placements = state.placementsThisMatch + 1
-        val finished = placements >= PlacementsPerMatch
+        val finished = placements >= GameRules.PlacementsPerMatch
 
         var p1Wins = state.p1GamesWon
         var p2Wins = state.p2GamesWon

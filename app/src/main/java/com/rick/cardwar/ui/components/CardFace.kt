@@ -35,11 +35,14 @@ fun CardFace(
     modifier: Modifier = Modifier,
     borderWidth: Dp = if (selected) 8.dp else 6.dp,
 ) {
-    val borderColor = cardBorderColor(owner, selected, empty = card == null && owner == PlayerId.None)
-    val description = if (card != null) {
-        "${card.rank.name} of ${card.suit.name}"
-    } else {
-        stringResource(R.string.empty_slot)
+    // A null card with no owner is a vacant board slot; a null card with an owner is a
+    // face-down hand card, which still shows that player's border.
+    val isEmptySlot = card == null && owner == PlayerId.None
+    val borderColor = cardBorderColor(owner, selected, empty = isEmptySlot)
+    val description = when {
+        card != null -> "${card.rank.name} of ${card.suit.name}"
+        isEmptySlot -> stringResource(R.string.empty_slot)
+        else -> stringResource(R.string.face_down_card)
     }
 
     Box(

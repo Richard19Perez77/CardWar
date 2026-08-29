@@ -1,11 +1,19 @@
 package com.rick.cardwar.game.model
 
+import androidx.compose.runtime.Immutable
+
 enum class GameStatus {
     Idle,
     Playing,
     Finished,
 }
 
+/**
+ * Whole-game snapshot. Marked [Immutable] because every property is a `val` and the
+ * collections are rebuilt on each transition instead of being mutated in place, which
+ * lets Compose skip recomposition when the instance is unchanged.
+ */
+@Immutable
 data class GameState(
     val status: GameStatus = GameStatus.Idle,
     val board: Map<BoardSlot, PlacedCard> = emptyMap(),
@@ -13,8 +21,8 @@ data class GameState(
     val player2Hand: List<PlayingCard> = emptyList(),
     val currentPlayer: PlayerId = PlayerId.None,
     val selectedCardId: Int? = null,
-    val p1Score: Int = 5,
-    val p2Score: Int = 5,
+    val p1Score: Int = GameRules.StartingScore,
+    val p2Score: Int = GameRules.StartingScore,
     val p1GamesWon: Int = 0,
     val p2GamesWon: Int = 0,
     val placementsThisMatch: Int = 0,
@@ -30,6 +38,4 @@ data class GameState(
         PlayerId.Two -> player2Hand
         PlayerId.None -> emptyList()
     }
-
-    fun isSelected(cardId: Int): Boolean = selectedCardId == cardId
 }

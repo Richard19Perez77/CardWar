@@ -3,22 +3,26 @@ package com.rick.cardwar.audio
 import android.media.AudioManager
 import android.media.ToneGenerator
 
-class GameSoundPlayer {
+/**
+ * Plays short system tones. The original card sound effects are gone, and the game never
+ * had music, so built-in tones avoid shipping audio assets.
+ */
+class GameSoundPlayer : GameSounds {
     private val toneGenerator = try {
         ToneGenerator(AudioManager.STREAM_MUSIC, ToneVolume)
     } catch (_: RuntimeException) {
         null
     }
 
-    fun playSelected(enabled: Boolean) {
+    override fun playSelected(enabled: Boolean) {
         play(ToneGenerator.TONE_PROP_BEEP, SelectDurationMs, enabled)
     }
 
-    fun playPlaced(enabled: Boolean) {
+    override fun playPlaced(enabled: Boolean) {
         play(ToneGenerator.TONE_PROP_BEEP2, PlaceDurationMs, enabled)
     }
 
-    fun playTurned(enabled: Boolean) {
+    override fun playTurned(enabled: Boolean) {
         play(ToneGenerator.TONE_PROP_ACK, CaptureDurationMs, enabled)
     }
 
@@ -31,7 +35,7 @@ class GameSoundPlayer {
         }
     }
 
-    fun release() {
+    override fun release() {
         toneGenerator?.release()
     }
 

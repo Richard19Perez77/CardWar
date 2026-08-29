@@ -19,7 +19,7 @@ import com.rick.cardwar.game.model.PlayerId
 @Composable
 fun BoardGrid(
     board: Map<BoardSlot, PlacedCard>,
-    selectedCardId: Int?,
+    hasSelection: Boolean,
     interactive: Boolean,
     onSlotClick: (BoardSlot) -> Unit,
     modifier: Modifier = Modifier,
@@ -42,10 +42,9 @@ fun BoardGrid(
                 Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
                     row.forEach { slot ->
                         val placed = board[slot]
-                        val empty = placed == null
                         BoardCell(
                             placed = placed,
-                            clickable = interactive && empty && selectedCardId != null,
+                            clickable = interactive && hasSelection && placed == null,
                             onClick = { onSlotClick(slot) },
                             modifier = Modifier.size(cardWidth, cardHeight),
                         )
