@@ -134,6 +134,7 @@ fun GameScreenContent(
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent,
                             vertical = true,
+                            faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
                             modifier = Modifier
                                 .weight(1f)
@@ -152,6 +153,7 @@ fun GameScreenContent(
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent,
                             vertical = false,
+                            faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
                             modifier = Modifier
                                 .weight(1f)

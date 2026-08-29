@@ -35,7 +35,7 @@ fun CardFace(
     modifier: Modifier = Modifier,
     borderWidth: Dp = if (selected) 8.dp else 6.dp,
 ) {
-    val borderColor = cardBorderColor(owner, selected, empty = card == null)
+    val borderColor = cardBorderColor(owner, selected, empty = card == null && owner == PlayerId.None)
     val description = if (card != null) {
         "${card.rank.name} of ${card.suit.name}"
     } else {

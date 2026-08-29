@@ -29,6 +29,7 @@ fun PlayerHand(
     vertical: Boolean,
     onCardClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    faceDown: Boolean = false,
 ) {
     BoxWithConstraints(modifier) {
         if (cards.isEmpty()) return@BoxWithConstraints
@@ -61,6 +62,7 @@ fun PlayerHand(
                         enabled = isCurrentPlayer,
                         vertical = true,
                         size = cardSize,
+                        faceDown = faceDown,
                         onClick = { onCardClick(card.id) },
                     )
                 }
@@ -79,6 +81,7 @@ fun PlayerHand(
                         enabled = isCurrentPlayer,
                         vertical = false,
                         size = cardSize,
+                        faceDown = faceDown,
                         onClick = { onCardClick(card.id) },
                     )
                 }
@@ -95,9 +98,10 @@ private fun HandCard(
     enabled: Boolean,
     vertical: Boolean,
     size: DpSize,
+    faceDown: Boolean,
     onClick: () -> Unit,
 ) {
-    val nudge = if (!selected) {
+    val nudge = if (!selected || faceDown) {
         0.dp
     } else if (vertical) {
         if (player == PlayerId.One) SelectedNudge else -SelectedNudge
@@ -105,9 +109,9 @@ private fun HandCard(
         if (player == PlayerId.One) -SelectedNudge else SelectedNudge
     }
     CardFace(
-        card = card,
+        card = if (faceDown) null else card,
         owner = player,
-        selected = selected,
+        selected = selected && !faceDown,
         modifier = Modifier
             .size(size)
             .offset(
