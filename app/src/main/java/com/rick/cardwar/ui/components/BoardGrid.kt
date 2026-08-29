@@ -56,23 +56,20 @@ private fun BoardSlotCell(
     cardSize: DpSize,
     onClick: () -> Unit,
 ) {
-    val open = placed == null && playableBy != null
-    val resting = cardBorderColor(
-        owner = placed?.owner ?: PlayerId.None,
-        selected = false,
-        empty = placed == null,
-    )
+    val owner = placed?.owner ?: PlayerId.None
+    val openTo = playableBy?.takeIf { placed == null }
     val border by animateColorAsState(
-        targetValue = if (placed == null && playableBy != null) playerAccent(playableBy) else resting,
+        targetValue = openTo?.let(::playerAccent)
+            ?: cardBorderColor(placed?.card, owner, selected = false),
         label = "slotBorder",
     )
     CardFace(
         card = placed?.card,
-        owner = placed?.owner ?: PlayerId.None,
+        owner = owner,
         selected = false,
         borderColor = border,
         modifier = Modifier
             .size(cardSize)
-            .clickable(enabled = open, onClick = onClick),
+            .clickable(enabled = openTo != null, onClick = onClick),
     )
 }

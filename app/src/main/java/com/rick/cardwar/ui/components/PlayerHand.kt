@@ -29,13 +29,22 @@ import com.rick.cardwar.ui.theme.TurnHighlight
 private val SelectedNudge = 8.dp
 private val PanelShape = RoundedCornerShape(12.dp)
 
-/** How a hand of cards is arranged in its slot. */
-enum class HandLayout {
-    /** Single horizontal row — the portrait strips above and below the board. */
-    Row,
+/**
+ * Where a hand sits relative to the board. This fixes both how many cards fit on a row and
+ * which way a selected card leans, so the lean always points at the board.
+ */
+enum class HandSlot(val cardsPerRow: Int, val lean: DpOffset) {
+    /** Portrait, above the board. */
+    Above(PlayAreaLayout.PortraitRowSize, DpOffset(0.dp, SelectedNudge)),
 
-    /** Three cards on top, the rest centred below — the landscape panels beside the board. */
-    GridThreeTwo,
+    /** Portrait, below the board and within thumb reach. */
+    Below(PlayAreaLayout.PortraitRowSize, DpOffset(0.dp, -SelectedNudge)),
+
+    /** Landscape, in the left gutter. */
+    Left(PlayAreaLayout.LandscapeRowSize, DpOffset(SelectedNudge, 0.dp)),
+
+    /** Landscape, in the right gutter. */
+    Right(PlayAreaLayout.LandscapeRowSize, DpOffset(-SelectedNudge, 0.dp)),
 }
 
 /**
@@ -48,7 +57,7 @@ fun PlayerHand(
     player: PlayerId,
     selectedCardId: Int?,
     isCurrentPlayer: Boolean,
-    layout: HandLayout,
+    slot: HandSlot,
     cardSize: DpSize,
     onCardClick: (Int) -> Unit,
     modifier: Modifier = Modifier,
@@ -59,54 +68,27 @@ fun PlayerHand(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(PlayAreaLayout.SlotGap),
         ) {
-            handRows(cards, layout).forEach { rowCards ->
+            cards.chunked(slot.cardsPerRow).forEach { rowCards ->
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(PlayAreaLayout.SlotGap),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     rowCards.forEach { card ->
                         val selected = selectedCardId == card.id && !faceDown
-                        val nudge = if (selected) nudgeTowardBoard(player, layout) else DpOffset.Zero
+                        val lean = if (selected) slot.lean else DpOffset.Zero
                         CardFace(
                             card = if (faceDown) null else card,
                             owner = player,
                             selected = selected,
                             modifier = Modifier
                                 .size(cardSize)
-                                .offset(x = nudge.x, y = nudge.y)
+                                .offset(x = lean.x, y = lean.y)
                                 .clickable(enabled = isCurrentPlayer) { onCardClick(card.id) },
                         )
                     }
                 }
             }
         }
-    }
-}
-
-private fun handRows(cards: List<PlayingCard>, layout: HandLayout): List<List<PlayingCard>> {
-    val rows = when (layout) {
-        HandLayout.Row -> listOf(cards)
-        HandLayout.GridThreeTwo -> listOf(
-            cards.take(PlayAreaLayout.LandscapeRowSize),
-            cards.drop(PlayAreaLayout.LandscapeRowSize),
-        )
-    }
-    return rows.filter { it.isNotEmpty() }
-}
-
-/** A selected card leans towards the board, hinting at where it is about to go. */
-private fun nudgeTowardBoard(player: PlayerId, layout: HandLayout): DpOffset = when (layout) {
-    // Portrait stacks the opponent above the board and you below it.
-    HandLayout.Row -> when (player) {
-        PlayerId.One -> DpOffset(0.dp, -SelectedNudge)
-        PlayerId.Two -> DpOffset(0.dp, SelectedNudge)
-        PlayerId.None -> DpOffset.Zero
-    }
-    // Landscape puts the board between the two hands.
-    HandLayout.GridThreeTwo -> when (player) {
-        PlayerId.One -> DpOffset(SelectedNudge, 0.dp)
-        PlayerId.Two -> DpOffset(-SelectedNudge, 0.dp)
-        PlayerId.None -> DpOffset.Zero
     }
 }
 

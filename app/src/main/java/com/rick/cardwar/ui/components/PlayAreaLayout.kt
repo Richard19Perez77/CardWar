@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import com.rick.cardwar.game.model.GameRules
 
 /** Card sizes for one orientation, measured once so the board and hands stay in proportion. */
 @Immutable
@@ -28,8 +29,8 @@ object PlayAreaLayout {
     /** Cards across a landscape hand's top row, matching a board row so both share a size. */
     const val LandscapeRowSize = 3
 
-    /** Cards across a portrait hand. */
-    const val PortraitRowSize = 5
+    /** Cards across a portrait hand, which holds the whole hand on one row. */
+    const val PortraitRowSize = GameRules.HAND_SIZE
 
     /** Portrait height split: the board has three rows of cards, each hand has one. */
     const val PortraitBoardWeight = 3f

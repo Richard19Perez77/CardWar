@@ -29,6 +29,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -40,7 +41,7 @@ import com.rick.cardwar.game.model.GameStatus
 import com.rick.cardwar.game.model.PlayerId
 import com.rick.cardwar.ui.components.BoardGrid
 import com.rick.cardwar.ui.components.GameHud
-import com.rick.cardwar.ui.components.HandLayout
+import com.rick.cardwar.ui.components.HandSlot
 import com.rick.cardwar.ui.components.PlayAreaLayout
 import com.rick.cardwar.ui.components.PlayAreaSizes
 import com.rick.cardwar.ui.components.PlayerHand
@@ -78,13 +79,6 @@ fun GameScreenContent(
     modifier: Modifier = Modifier,
 ) {
     var showRules by remember { mutableStateOf(false) }
-    val playing = state.status == GameStatus.Playing
-    val cpuThinking = state.cpuOpponent && state.currentPlayer == PlayerId.Two
-    val player1Active = playing && state.currentPlayer == PlayerId.One
-    val player2Active = playing && state.currentPlayer == PlayerId.Two && !state.cpuOpponent
-    val playableBy = state.currentPlayer.takeIf {
-        playing && !cpuThinking && state.selectedCardId != null
-    }
 
     Box(modifier.fillMaxSize()) {
         Image(
@@ -115,9 +109,6 @@ fun GameScreenContent(
                     LandscapePlayArea(
                         state = state,
                         sizes = PlayAreaLayout.landscape(maxWidth, maxHeight),
-                        player1Active = player1Active,
-                        player2Active = player2Active,
-                        playableBy = playableBy,
                         onCardClick = onCardClick,
                         onSlotClick = onSlotClick,
                     )
@@ -125,9 +116,6 @@ fun GameScreenContent(
                     PortraitPlayArea(
                         state = state,
                         sizes = PlayAreaLayout.portrait(maxWidth, maxHeight),
-                        player1Active = player1Active,
-                        player2Active = player2Active,
-                        playableBy = playableBy,
                         onCardClick = onCardClick,
                         onSlotClick = onSlotClick,
                     )
@@ -151,9 +139,6 @@ fun GameScreenContent(
 private fun LandscapePlayArea(
     state: GameState,
     sizes: PlayAreaSizes,
-    player1Active: Boolean,
-    player2Active: Boolean,
-    playableBy: PlayerId?,
     onCardClick: (Int) -> Unit,
     onSlotClick: (BoardSlot) -> Unit,
 ) {
@@ -161,40 +146,20 @@ private fun LandscapePlayArea(
         modifier = Modifier.fillMaxSize(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        PlayerHand(
-            cards = state.player1Hand,
-            player = PlayerId.One,
-            selectedCardId = state.selectedCardId,
-            isCurrentPlayer = player1Active,
-            layout = HandLayout.GridThreeTwo,
-            cardSize = sizes.handCard,
-            onCardClick = onCardClick,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        )
+        val gutter = Modifier
+            .weight(1f)
+            .fillMaxHeight()
+        Hand(state, PlayerId.One, HandSlot.Left, sizes.handCard, onCardClick, gutter)
         BoardGrid(
             board = state.board,
-            playableBy = playableBy,
+            playableBy = state.playableBy,
             cardSize = sizes.boardCard,
             onSlotClick = onSlotClick,
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(horizontal = PlayAreaLayout.BoardPadding),
         )
-        PlayerHand(
-            cards = state.player2Hand,
-            player = PlayerId.Two,
-            selectedCardId = state.selectedCardId,
-            isCurrentPlayer = player2Active,
-            layout = HandLayout.GridThreeTwo,
-            cardSize = sizes.handCard,
-            faceDown = state.cpuOpponent,
-            onCardClick = onCardClick,
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxHeight(),
-        )
+        Hand(state, PlayerId.Two, HandSlot.Right, sizes.handCard, onCardClick, gutter)
     }
 }
 
@@ -203,9 +168,6 @@ private fun LandscapePlayArea(
 private fun PortraitPlayArea(
     state: GameState,
     sizes: PlayAreaSizes,
-    player1Active: Boolean,
-    player2Active: Boolean,
-    playableBy: PlayerId?,
     onCardClick: (Int) -> Unit,
     onSlotClick: (BoardSlot) -> Unit,
 ) {
@@ -213,22 +175,13 @@ private fun PortraitPlayArea(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        PlayerHand(
-            cards = state.player2Hand,
-            player = PlayerId.Two,
-            selectedCardId = state.selectedCardId,
-            isCurrentPlayer = player2Active,
-            layout = HandLayout.Row,
-            cardSize = sizes.handCard,
-            faceDown = state.cpuOpponent,
-            onCardClick = onCardClick,
-            modifier = Modifier
-                .weight(PlayAreaLayout.PortraitHandWeight)
-                .fillMaxWidth(),
-        )
+        val strip = Modifier
+            .weight(PlayAreaLayout.PortraitHandWeight)
+            .fillMaxWidth()
+        Hand(state, PlayerId.Two, HandSlot.Above, sizes.handCard, onCardClick, strip)
         BoardGrid(
             board = state.board,
-            playableBy = playableBy,
+            playableBy = state.playableBy,
             cardSize = sizes.boardCard,
             onSlotClick = onSlotClick,
             modifier = Modifier
@@ -236,20 +189,44 @@ private fun PortraitPlayArea(
                 .fillMaxWidth()
                 .padding(PlayAreaLayout.BoardPadding),
         )
-        PlayerHand(
-            cards = state.player1Hand,
-            player = PlayerId.One,
-            selectedCardId = state.selectedCardId,
-            isCurrentPlayer = player1Active,
-            layout = HandLayout.Row,
-            cardSize = sizes.handCard,
-            onCardClick = onCardClick,
-            modifier = Modifier
-                .weight(PlayAreaLayout.PortraitHandWeight)
-                .fillMaxWidth(),
-        )
+        Hand(state, PlayerId.One, HandSlot.Below, sizes.handCard, onCardClick, strip)
     }
 }
+
+@Composable
+private fun Hand(
+    state: GameState,
+    player: PlayerId,
+    slot: HandSlot,
+    cardSize: DpSize,
+    onCardClick: (Int) -> Unit,
+    modifier: Modifier,
+) {
+    PlayerHand(
+        cards = state.handOf(player),
+        player = player,
+        selectedCardId = state.selectedCardId,
+        isCurrentPlayer = state.acceptsTouchFrom(player),
+        slot = slot,
+        cardSize = cardSize,
+        faceDown = state.isCpu(player),
+        onCardClick = onCardClick,
+        modifier = modifier,
+    )
+}
+
+/** A player drives the UI only on their own turn, and never while the CPU plays for them. */
+private fun GameState.acceptsTouchFrom(player: PlayerId): Boolean =
+    status == GameStatus.Playing &&
+        currentPlayer == player &&
+        !isCpu(player)
+
+/** The player who can drop the selected card onto the board right now, if any. */
+private val GameState.playableBy: PlayerId?
+    get() = currentPlayer.takeIf { selectedCardId != null && acceptsTouchFrom(it) }
+
+/** True when the machine plays this hand, so it neither takes touches nor shows its cards. */
+private fun GameState.isCpu(player: PlayerId): Boolean = cpuOpponent && player == PlayerId.Two
 
 @Composable
 private fun ScoreBar(state: GameState) {

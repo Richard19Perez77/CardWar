@@ -34,18 +34,11 @@ fun CardFace(
     selected: Boolean,
     modifier: Modifier = Modifier,
     borderWidth: Dp = if (selected) 8.dp else 6.dp,
-    borderColor: Color = cardBorderColor(
-        owner = owner,
-        selected = selected,
-        empty = card == null && owner == PlayerId.None,
-    ),
+    borderColor: Color = cardBorderColor(card, owner, selected),
 ) {
-    // A null card with no owner is a vacant board slot; a null card with an owner is a
-    // face-down hand card, which still shows that player's border.
-    val isEmptySlot = card == null && owner == PlayerId.None
     val description = when {
         card != null -> "${card.rank.name} of ${card.suit.name}"
-        isEmptySlot -> stringResource(R.string.empty_slot)
+        isEmptySlot(card, owner) -> stringResource(R.string.empty_slot)
         else -> stringResource(R.string.face_down_card)
     }
 
@@ -81,11 +74,15 @@ fun playerAccent(player: PlayerId): Color = when (player) {
     PlayerId.None -> UnownedBorder
 }
 
-fun cardBorderColor(owner: PlayerId, selected: Boolean, empty: Boolean): Color = when {
-    empty -> EmptySlotBorder
-    selected && owner == PlayerId.One -> Player1Selected
-    selected && owner == PlayerId.Two -> Player2Selected
-    owner == PlayerId.One -> Player1Border
-    owner == PlayerId.Two -> Player2Border
+fun cardBorderColor(card: PlayingCard?, owner: PlayerId, selected: Boolean): Color = when {
+    isEmptySlot(card, owner) -> EmptySlotBorder
+    owner == PlayerId.One -> if (selected) Player1Selected else Player1Border
+    owner == PlayerId.Two -> if (selected) Player2Selected else Player2Border
     else -> UnownedBorder
 }
+
+/**
+ * A missing card with no owner is a vacant board slot. A missing card that still has an owner
+ * is a face-down hand card, so it keeps that player's border.
+ */
+private fun isEmptySlot(card: PlayingCard?, owner: PlayerId) = card == null && owner == PlayerId.None
