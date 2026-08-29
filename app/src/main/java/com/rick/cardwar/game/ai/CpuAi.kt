@@ -13,28 +13,28 @@ data class CpuMove(
 
 object CpuAi {
 
+    /**
+     * Looks for any placement that flips a Player 1 card, checking cards and slots in a
+     * random order so repeated matches do not play out identically. Falls back to a
+     * random legal move when nothing can be captured.
+     */
     fun chooseMove(state: GameState, random: Random = Random.Default): CpuMove? {
-        val cards = state.player2Hand.toMutableList()
-        if (cards.isEmpty()) return null
-
+        val cards = state.player2Hand
         val emptySlots = state.emptySlots
-        if (emptySlots.isEmpty()) return null
+        if (cards.isEmpty() || emptySlots.isEmpty()) return null
 
-        val remainingCards = cards.toMutableList()
-        while (remainingCards.isNotEmpty()) {
-            val card = remainingCards.removeAt(random.nextInt(remainingCards.size))
-            val slots = emptySlots.toMutableList()
-            while (slots.isNotEmpty()) {
-                val slot = slots.removeAt(random.nextInt(slots.size))
+        for (card in cards.shuffled(random)) {
+            for (slot in emptySlots.shuffled(random)) {
                 if (wouldCapturePlayer1(card, slot, state)) {
                     return CpuMove(cardId = card.id, slot = slot)
                 }
             }
         }
 
-        val randomCard = cards[random.nextInt(cards.size)]
-        val randomSlot = emptySlots[random.nextInt(emptySlots.size)]
-        return CpuMove(cardId = randomCard.id, slot = randomSlot)
+        return CpuMove(
+            cardId = cards.random(random).id,
+            slot = emptySlots.random(random),
+        )
     }
 
     internal fun wouldCapturePlayer1(

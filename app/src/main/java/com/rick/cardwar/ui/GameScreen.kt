@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.rick.cardwar.R
+import com.rick.cardwar.game.GameEngine
 import com.rick.cardwar.game.model.BoardSlot
 import com.rick.cardwar.game.model.GameState
 import com.rick.cardwar.game.model.GameStatus
@@ -45,6 +46,7 @@ import com.rick.cardwar.ui.theme.HudScrim
 import com.rick.cardwar.ui.theme.Player1Selected
 import com.rick.cardwar.ui.theme.Player2Border
 import com.rick.cardwar.ui.theme.ScoreText
+import kotlin.random.Random
 
 @Composable
 fun GameScreen(viewModel: GameViewModel = viewModel()) {
@@ -273,28 +275,23 @@ private fun GameInfoDialog(
     )
 }
 
-@Preview(showBackground = true, widthDp = 800, heightDp = 480)
-@Composable
-private fun GameScreenLandscapePreview() {
-    CardWarTheme(darkTheme = true) {
-        GameScreenContent(
-            state = GameState(),
-            soundEnabled = true,
-            onStart = {},
-            onCardClick = {},
-            onSlotClick = {},
-            onCpuChange = {},
-            onSoundToggle = {},
-        )
-    }
+/** Deterministic mid-match state so previews show dealt hands instead of a bare board. */
+private fun previewState(): GameState {
+    val dealt = GameEngine.startMatch(GameState(), Random(seed = 7))
+    val withPlacement = GameEngine.place(
+        state = dealt.copy(selectedCardId = dealt.player1Hand.first().id),
+        slot = BoardSlot.TopLeft,
+    )
+    return withPlacement.copy(currentPlayer = PlayerId.One, selectedCardId = null)
 }
 
-@Preview(showBackground = true, widthDp = 360, heightDp = 800)
+@Preview(name = "Landscape", showBackground = true, widthDp = 800, heightDp = 480)
+@Preview(name = "Portrait", showBackground = true, widthDp = 360, heightDp = 800)
 @Composable
-private fun GameScreenPortraitPreview() {
-    CardWarTheme(darkTheme = true) {
+private fun GameScreenPreview() {
+    CardWarTheme(darkTheme = true, dynamicColor = false) {
         GameScreenContent(
-            state = GameState(),
+            state = previewState(),
             soundEnabled = true,
             onStart = {},
             onCardClick = {},
