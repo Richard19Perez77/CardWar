@@ -40,6 +40,7 @@ import com.rick.cardwar.game.model.GameStatus
 import com.rick.cardwar.game.model.PlayerId
 import com.rick.cardwar.ui.components.BoardGrid
 import com.rick.cardwar.ui.components.GameHud
+import com.rick.cardwar.ui.components.HandLayout
 import com.rick.cardwar.ui.components.PlayerHand
 import com.rick.cardwar.ui.theme.CardWarTheme
 import com.rick.cardwar.ui.theme.HudScrim
@@ -117,7 +118,7 @@ fun GameScreenContent(
                             player = PlayerId.One,
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = player1Active,
-                            vertical = true,
+                            layout = HandLayout.GridThreeTwo,
                             onCardClick = onCardClick,
                             modifier = Modifier
                                 .weight(1f)
@@ -139,7 +140,7 @@ fun GameScreenContent(
                             player = PlayerId.Two,
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = player2Active,
-                            vertical = true,
+                            layout = HandLayout.GridThreeTwo,
                             faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
                             modifier = Modifier
@@ -158,7 +159,7 @@ fun GameScreenContent(
                             player = PlayerId.Two,
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = player2Active,
-                            vertical = false,
+                            layout = HandLayout.Row,
                             faceDown = state.cpuOpponent,
                             onCardClick = onCardClick,
                             modifier = Modifier
@@ -181,7 +182,7 @@ fun GameScreenContent(
                             player = PlayerId.One,
                             selectedCardId = state.selectedCardId,
                             isCurrentPlayer = player1Active,
-                            vertical = false,
+                            layout = HandLayout.Row,
                             onCardClick = onCardClick,
                             modifier = Modifier
                                 .weight(1f)
