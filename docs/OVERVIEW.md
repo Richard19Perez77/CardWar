@@ -195,9 +195,43 @@ Sound uses **volume-up / volume-off** Material Symbols checked in as two local v
 
 Launcher vectors were restored after drawables were deleted: teal field + white card/spade. Adaptive icons live in `mipmap-anydpi-v26`, with per-density `webp` bitmaps as the API 24–25 fallback. An earlier layer-list in plain `mipmap-anydpi` was removed: `anydpi` outranks density folders, so it silently shadowed those bitmaps on exactly the versions it was meant to help.
 
+---
+
+## Build and toolchain
+
+| Setting | Value | Why |
+|---|---|---|
+| Gradle | 9.5.0 | Highest version fully supported by the Kotlin plugin, no deprecation warnings |
+| AGP | 9.3.2 | Required by Compose 1.12+ / `compileSdk 37`; also supplies Kotlin, so no separate `kotlin.android` plugin |
+| Kotlin (compose plugin) | 2.4.10 | Must track the Kotlin AGP bundles; verified against AGP 9.3.2 by building |
+| Compose BOM | 2026.08.00 | One version pin for every Compose artifact |
+| `compileSdk` / `targetSdk` | 37 | Current; `targetSdk 35+` means edge-to-edge is the default, which the safe-drawing insets already assume |
+| `minSdk` | 24 | Keeps the original's reach without needing desugaring workarounds |
+| `sourceCompatibility` / `targetCompatibility` | **17** | Was 11 from the project template |
+
+### Three different "Java versions" are in play
+
+This trips people up, so it is worth stating plainly:
+
+1. **The JDK that runs Gradle** (Java 25 here, from Android Studio). Only affects the build process.
+2. **`sourceCompatibility` / `targetCompatibility`** — the bytecode level AGP targets, now **17**. This is what "which Java can I write" means. It does *not* let you call newer JDK library methods.
+3. **The ART runtime on the device**, bounded by `minSdk 24`. This decides which library methods actually exist.
+
+Raising #2 from 11 to 17 is free, because D8 desugars the language features down to API 24. Raising #1 changes nothing about the app.
+
 ### Java 21 `List.removeFirst()`
 
-Kotlin compiles `removeFirst()` to a Java 21 `List` method. Older ART throws `NoSuchMethodError`. Deal uses **`removeAt(0)`**, which exists on all API levels we support.
+Point 3 above is exactly why the deal uses **`removeAt(0)`**. Kotlin compiles `removeFirst()` to the Java 21 `List` method, which older ART does not have, so it crashed with `NoSuchMethodError` at runtime even though it compiled cleanly under JDK 25. `removeAt(0)` exists on every API level we support.
+
+### R8 is on for release
+
+The template shipped `optimization { enable = false }`, so release builds were unshrunk and unobfuscated. It is now `true`, which turns on `minifyReleaseWithR8` plus resource shrinking. No custom keep rules are needed — Compose ships its own, and the app uses no reflection. Verified by building `assembleRelease`.
+
+### Card art lives in `drawable-nodpi`
+
+The 54 card PNGs are 93×120. In a bare `drawable/` folder Android treats them as mdpi and **upscales them at decode time** — roughly 9× the memory on a 3× device — for no visual gain, since Compose scales them to the slot size anyway. `drawable-nodpi` decodes them at native size. The two leftover `res/raw` MP3s from the old `SoundPool` era were deleted at the same time.
+
+The launch theme is `android:Theme.Material.NoActionBar` with a `miku_ink` window background, so there is no white flash before the dark board draws.
 
 ---
 
