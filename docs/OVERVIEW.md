@@ -6,7 +6,7 @@ This document explains how the Compose port is structured, which standards it fo
 
 CardWAR is a two-player capture game on a 3×3 board. Each player is dealt five cards. The center starts face-up and **unowned**; it cannot be placed on. Players alternate placing onto the eight empty slots. After a place, any **orthogonal** neighbor you do not already own, with a **strictly lower** rank, flips to you and a point moves. Score starts **5–5** and **only changes on captures**. After eight placements the match ends; the higher score takes the match win. Ties award neither player.
 
-Optional **P2 CPU** plays the second seat. Both hands stay face-up (hot-seat / open information), matching the original.
+Optional **P2 CPU** plays the second seat. With the CPU on, P2's hand is dealt **face down**, because the CPU never reads P1's cards and showing its hand only leaked information one way. With the CPU off both hands stay face up for hot-seat play, matching the original.
 
 ---
 
@@ -37,9 +37,12 @@ User / CPU  →  GameViewModel  →  GameEngine.reduce(state, action)  →  new 
                          GameScreen (Compose)
 ```
 
-- **`GameState`** is an immutable data class. Nothing in the UI mutates cards or scores in place.
+- **`GameState`** is an immutable data class, annotated `@Immutable` so Compose can skip subtrees when the instance has not changed. Nothing in the UI mutates cards or scores in place.
 - **`GameAction`** is a sealed interface (`StartMatch`, `SelectCard`, `Place`, `SetCpu`). Every rule change is an action.
 - **`GameEngine.reduce`** is a pure function: `(GameState, GameAction) → GameState`. No Android types, no Compose, no sounds.
+- **`reduce` is the only way state changes.** The ViewModel has a single private `dispatch(action)`; it never calls `place`/`selectCard` directly and never writes fields on the state. Rule constants live in `GameRules` so the engine and `GameState` defaults cannot drift apart.
+
+**Rejected moves return the same instance.** When an action is illegal the engine does `return state` rather than building an equal copy. That makes `after === before` a reliable "nothing happened" signal, so `dispatch` can decide whether to play a sound or hand the turn to the CPU without diffing fields.
 
 This is the same idea as Redux / MVI, kept small. It is the right fit for a turn-based game: the next board is a function of the previous board plus one move. Time-travel, tests, and CPU play all become “feed an action, assert the state.”
 
@@ -55,7 +58,9 @@ This is the same idea as Redux / MVI, kept small. It is the right fit for a turn
 
 **`MainActivity`** only calls `setContent`. It does not deal cards, play sounds, or own score. That is the Android recommended “single activity, thin host” pattern.
 
-**`GameViewModel`** is the only bridge: it holds `StateFlow<GameState>`, runs the CPU on a coroutine delay, and asks `GameSoundPlayer` to beep. Sound enablement is **not** in `GameState` because it is a device preference, not a rule.
+**`GameViewModel`** is the only bridge: it holds `StateFlow<GameState>`, runs the CPU on a coroutine delay, and asks `GameSounds` to beep. Sound enablement is **not** in `GameState` because it is a device preference, not a rule.
+
+It is a plain `ViewModel`, not an `AndroidViewModel`. Nothing it owns needs a `Context` once sounds moved to `ToneGenerator`, and audio is injected as the **`GameSounds`** interface so the whole ViewModel — CPU scheduling included — is testable on the JVM.
 
 **`CardDrawables`** maps rank+suit → `R.drawable`. That is Android, so it lives next to the deck mapping but is **not** used by `GameEngine` or unit tests. Tests construct `PlayingCard(id, rank, suit)` directly.
 
@@ -64,9 +69,11 @@ This is the same idea as Redux / MVI, kept small. It is the right fit for a turn
 ```
 com.rick.cardwar
   MainActivity.kt                 // Compose host
-  audio/GameSoundPlayer.kt        // ToneGenerator SFX
+  audio/
+    GameSounds.kt                 // interface the ViewModel depends on
+    GameSoundPlayer.kt            // ToneGenerator SFX (Android)
   game/
-    model/                        // Rank, Suit, PlayerId, PlayingCard, BoardSlot, GameState
+    model/                        // Rank, Suit, PlayerId, PlayingCard, BoardSlot, GameState, GameRules
     Deck.kt
     GameEngine.kt
     CardDrawables.kt              // resource IDs only
