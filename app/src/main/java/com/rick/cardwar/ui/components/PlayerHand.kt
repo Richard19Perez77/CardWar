@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,7 +41,14 @@ fun PlayerHand(
     modifier: Modifier = Modifier,
     faceDown: Boolean = false,
 ) {
-    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+    val boxModifier = when (layout) {
+        HandLayout.GridThreeTwo -> modifier
+            .fillMaxHeight()
+            .wrapContentWidth()
+
+        HandLayout.Row -> modifier
+    }
+    BoxWithConstraints(boxModifier, contentAlignment = Alignment.Center) {
         if (cards.isEmpty()) return@BoxWithConstraints
 
         when (layout) {
@@ -159,14 +166,29 @@ private fun BoxWithConstraintsScope.gridCardSize(
     val rowGaps = HandGap * (rowCount - 1)
     val maxHeightPerRow = (maxHeight - rowGaps) / rowCount
 
-    val topWidth = rowMaxCardWidth(topCount)
-    val bottomWidth = if (bottomCount > 0) rowMaxCardWidth(bottomCount) else topWidth
-    val maxWidthPerCard = minOf(topWidth, bottomWidth)
+    // Size from height first so the 3+2 block stays compact and can sit centered
+    // in the landscape gutter between the screen edge and the board.
+    var height = maxHeightPerRow
+    var width = height * CardAspectRatio
 
-    val heightFromWidth = maxWidthPerCard / CardAspectRatio
-    val height = minOf(maxHeightPerRow, heightFromWidth)
-    val width = height * CardAspectRatio
+    val topRowWidth = rowContentWidth(width, topCount)
+    val bottomRowWidth = if (bottomCount > 0) rowContentWidth(width, bottomCount) else 0.dp
+    val handWidth = maxOf(topRowWidth, bottomRowWidth)
+
+    if (handWidth > maxWidth) {
+        val topMaxW = rowMaxCardWidth(topCount)
+        val bottomMaxW = if (bottomCount > 0) rowMaxCardWidth(bottomCount) else topMaxW
+        val maxWidthPerCard = minOf(topMaxW, bottomMaxW)
+        height = minOf(maxHeightPerRow, maxWidthPerCard / CardAspectRatio)
+        width = height * CardAspectRatio
+    }
+
     return DpSize(width, height)
+}
+
+private fun rowContentWidth(cardWidth: Dp, cardCount: Int): Dp {
+    if (cardCount <= 0) return 0.dp
+    return cardWidth * cardCount + HandGap * (cardCount - 1)
 }
 
 private fun BoxWithConstraintsScope.rowMaxCardWidth(cardCount: Int): Dp {

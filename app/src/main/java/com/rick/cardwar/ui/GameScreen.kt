@@ -3,6 +3,7 @@ package com.rick.cardwar.ui
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -113,18 +114,24 @@ fun GameScreenContent(
                         modifier = Modifier.fillMaxSize(),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        PlayerHand(
-                            cards = state.player1Hand,
-                            player = PlayerId.One,
-                            selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = player1Active,
-                            layout = HandLayout.GridThreeTwo,
-                            onCardClick = onCardClick,
+                        Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight()
-                                .padding(8.dp),
-                        )
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            PlayerHand(
+                                cards = state.player1Hand,
+                                player = PlayerId.One,
+                                selectedCardId = state.selectedCardId,
+                                isCurrentPlayer = player1Active,
+                                layout = HandLayout.GridThreeTwo,
+                                onCardClick = onCardClick,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .padding(8.dp),
+                            )
+                        }
                         BoardGrid(
                             board = state.board,
                             hasSelection = state.selectedCardId != null,
@@ -135,19 +142,25 @@ fun GameScreenContent(
                                 .fillMaxHeight()
                                 .padding(4.dp),
                         )
-                        PlayerHand(
-                            cards = state.player2Hand,
-                            player = PlayerId.Two,
-                            selectedCardId = state.selectedCardId,
-                            isCurrentPlayer = player2Active,
-                            layout = HandLayout.GridThreeTwo,
-                            faceDown = state.cpuOpponent,
-                            onCardClick = onCardClick,
+                        Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight()
-                                .padding(8.dp),
-                        )
+                                .fillMaxHeight(),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            PlayerHand(
+                                cards = state.player2Hand,
+                                player = PlayerId.Two,
+                                selectedCardId = state.selectedCardId,
+                                isCurrentPlayer = player2Active,
+                                layout = HandLayout.GridThreeTwo,
+                                faceDown = state.cpuOpponent,
+                                onCardClick = onCardClick,
+                                modifier = Modifier
+                                    .fillMaxHeight()
+                                    .padding(8.dp),
+                            )
+                        }
                     }
                 } else {
                     Column(
