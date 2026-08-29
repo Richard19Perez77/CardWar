@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">CardWAR!</string>
+    <string name="start">Start</string>
+    <string name="rules">Rules</string>
+    <string name="cpu">P2 CPU</string>
+    <string name="sound">Sound</string>
+    <string name="p1_wins">Player 1 Wins = %1$d</string>
+    <string name="p2_wins">Player 2 Wins = %1$d</string>
+    <string name="match_score">[%1$d - %2$d]</string>
+    <string name="turn_player_1">Player 1 to play</string>
+    <string name="turn_player_2">Player 2 to play</string>
+    <string name="match_over">Match over — tap Start for another round</string>
+    <string name="tap_start">Tap Start to deal</string>
+    <string name="rules_title">Rules/Instructions</string>
+    <string name="rules_body">a)  Player one\'s border is TEAL.\nb)  Player two\'s border is PINK.\nc)  Center card starts out neutral, but can be taken.\nd)  Think war. The high card turns border color.\ne)  Try to take multiple cards at once with higher cards.\nf)  Ace is the highest card.\ng)  Check P2 CPU on for Computer Opponent.</string>
+    <string name="ok">OK!</string>
+    <string name="good_luck">Good Luck!</string>
+    <string name="empty_slot">Empty slot</string>
+</resources>
