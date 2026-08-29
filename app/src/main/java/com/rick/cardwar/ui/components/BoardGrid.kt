@@ -1,64 +1,48 @@
 package com.rick.cardwar.ui.components
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.dp
 import com.rick.cardwar.game.model.BoardSlot
 import com.rick.cardwar.game.model.PlacedCard
 import com.rick.cardwar.game.model.PlayerId
 
+/**
+ * The 3x3 play area.
+ *
+ * @param playableBy the player who can fill an empty slot right now, or null when tapping
+ * the board does nothing. Open slots take on that player's colour as a drop hint.
+ */
 @Composable
 fun BoardGrid(
     board: Map<BoardSlot, PlacedCard>,
-    hasSelection: Boolean,
-    interactive: Boolean,
+    playableBy: PlayerId?,
+    cardSize: DpSize,
     onSlotClick: (BoardSlot) -> Unit,
     modifier: Modifier = Modifier,
-    cardSize: DpSize? = null,
 ) {
-    BoxWithConstraints(
+    Column(
         modifier = modifier,
-        contentAlignment = Alignment.Center,
+        verticalArrangement = Arrangement.spacedBy(PlayAreaLayout.SlotGap, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val gap = PlayAreaLayout.SlotGap
-        val (cardWidth, cardHeight) = if (cardSize != null) {
-            cardSize.width to cardSize.height
-        } else {
-            val maxCardHeight = (maxHeight - gap * 2) / 3
-            var height = maxCardHeight
-            var width = height * CardAspectRatio
-            val gridWidth = width * 3 + gap * 2
-            if (gridWidth > maxWidth) {
-                width = (maxWidth - gap * 2) / 3
-                height = width / CardAspectRatio
-            }
-            width to height
-        }
-
-        Column(
-            verticalArrangement = Arrangement.spacedBy(gap),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            BoardSlot.rows.forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    row.forEach { slot ->
-                        val placed = board[slot]
-                        BoardCell(
-                            placed = placed,
-                            clickable = interactive && hasSelection && placed == null,
-                            onClick = { onSlotClick(slot) },
-                            modifier = Modifier.size(cardWidth, cardHeight),
-                        )
-                    }
+        BoardSlot.rows.forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(PlayAreaLayout.SlotGap)) {
+                row.forEach { slot ->
+                    BoardSlotCell(
+                        placed = board[slot],
+                        playableBy = playableBy,
+                        cardSize = cardSize,
+                        onClick = { onSlotClick(slot) },
+                    )
                 }
             }
         }
@@ -66,20 +50,29 @@ fun BoardGrid(
 }
 
 @Composable
-private fun BoardCell(
+private fun BoardSlotCell(
     placed: PlacedCard?,
-    clickable: Boolean,
+    playableBy: PlayerId?,
+    cardSize: DpSize,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    Box(
-        modifier = modifier.clickable(enabled = clickable, onClick = onClick),
-    ) {
-        CardFace(
-            card = placed?.card,
-            owner = placed?.owner ?: PlayerId.None,
-            selected = false,
-            modifier = Modifier.matchParentSize(),
-        )
-    }
+    val open = placed == null && playableBy != null
+    val resting = cardBorderColor(
+        owner = placed?.owner ?: PlayerId.None,
+        selected = false,
+        empty = placed == null,
+    )
+    val border by animateColorAsState(
+        targetValue = if (placed == null && playableBy != null) playerAccent(playableBy) else resting,
+        label = "slotBorder",
+    )
+    CardFace(
+        card = placed?.card,
+        owner = placed?.owner ?: PlayerId.None,
+        selected = false,
+        borderColor = border,
+        modifier = Modifier
+            .size(cardSize)
+            .clickable(enabled = open, onClick = onClick),
+    )
 }

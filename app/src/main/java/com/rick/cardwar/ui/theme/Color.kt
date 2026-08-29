@@ -20,3 +20,9 @@ val UnownedBorder = Color(0xFF2A2A2A)
 val EmptySlotBorder = Color(0x66FFFFFF)
 val HudScrim = Color(0xCC0B1C1B)
 val ScoreText = MikuWhite
+
+/**
+ * Outlines the hand whose turn it is. One colour for both players, and deliberately not
+ * teal, so it stays legible against the teal board art on either side.
+ */
+val TurnHighlight = Color(0xFFFF5AAD)

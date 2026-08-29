@@ -34,11 +34,15 @@ fun CardFace(
     selected: Boolean,
     modifier: Modifier = Modifier,
     borderWidth: Dp = if (selected) 8.dp else 6.dp,
+    borderColor: Color = cardBorderColor(
+        owner = owner,
+        selected = selected,
+        empty = card == null && owner == PlayerId.None,
+    ),
 ) {
     // A null card with no owner is a vacant board slot; a null card with an owner is a
     // face-down hand card, which still shows that player's border.
     val isEmptySlot = card == null && owner == PlayerId.None
-    val borderColor = cardBorderColor(owner, selected, empty = isEmptySlot)
     val description = when {
         card != null -> "${card.rank.name} of ${card.suit.name}"
         isEmptySlot -> stringResource(R.string.empty_slot)
@@ -68,6 +72,13 @@ fun CardFace(
             )
         }
     }
+}
+
+/** The colour that identifies a player across hands, board hints and the score bar. */
+fun playerAccent(player: PlayerId): Color = when (player) {
+    PlayerId.One -> Player1Selected
+    PlayerId.Two -> Player2Selected
+    PlayerId.None -> UnownedBorder
 }
 
 fun cardBorderColor(owner: PlayerId, selected: Boolean, empty: Boolean): Color = when {
