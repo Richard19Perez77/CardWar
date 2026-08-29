@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import com.rick.cardwar.game.model.BoardSlot
 import com.rick.cardwar.game.model.PlacedCard
 import com.rick.cardwar.game.model.PlayerId
@@ -29,10 +28,14 @@ fun BoardGrid(
         contentAlignment = Alignment.Center,
     ) {
         val gap = 6.dp
-        val maxCardWidth = (maxWidth - gap * 2) / 3
         val maxCardHeight = (maxHeight - gap * 2) / 3
-        val cardHeight = min(maxCardHeight, maxCardWidth / CardAspectRatio)
-        val cardWidth = cardHeight * CardAspectRatio
+        var cardHeight = maxCardHeight
+        var cardWidth = cardHeight * CardAspectRatio
+        val gridWidth = cardWidth * 3 + gap * 2
+        if (gridWidth > maxWidth) {
+            cardWidth = (maxWidth - gap * 2) / 3
+            cardHeight = cardWidth / CardAspectRatio
+        }
 
         Column(
             verticalArrangement = Arrangement.spacedBy(gap),

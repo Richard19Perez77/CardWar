@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -22,8 +21,6 @@ import com.rick.cardwar.game.model.PlayingCard
 
 private val HandGap = 6.dp
 private val SelectedNudge = 8.dp
-/** Fraction of gutter width used for sizing — leaves visible margin when centered. */
-private const val GridHandWidthFraction = 0.88f
 private const val TopRowSize = 3
 
 /** How a hand of cards is arranged in its slot. */
@@ -46,33 +43,27 @@ fun PlayerHand(
     modifier: Modifier = Modifier,
     faceDown: Boolean = false,
 ) {
-    when (layout) {
-        HandLayout.GridThreeTwo -> {
-            BoxWithConstraints(modifier.fillMaxSize()) {
-                if (cards.isEmpty()) return@BoxWithConstraints
-                GridHandContent(
-                    cards = cards,
-                    player = player,
-                    selectedCardId = selectedCardId,
-                    isCurrentPlayer = isCurrentPlayer,
-                    faceDown = faceDown,
-                    onCardClick = onCardClick,
-                )
-            }
-        }
+    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+        if (cards.isEmpty()) return@BoxWithConstraints
 
-        HandLayout.Row -> {
-            BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
-                if (cards.isEmpty()) return@BoxWithConstraints
-                RowHandContent(
-                    cards = cards,
-                    player = player,
-                    selectedCardId = selectedCardId,
-                    isCurrentPlayer = isCurrentPlayer,
-                    faceDown = faceDown,
-                    onCardClick = onCardClick,
-                )
-            }
+        when (layout) {
+            HandLayout.Row -> RowHandContent(
+                cards = cards,
+                player = player,
+                selectedCardId = selectedCardId,
+                isCurrentPlayer = isCurrentPlayer,
+                faceDown = faceDown,
+                onCardClick = onCardClick,
+            )
+
+            HandLayout.GridThreeTwo -> GridHandContent(
+                cards = cards,
+                player = player,
+                selectedCardId = selectedCardId,
+                isCurrentPlayer = isCurrentPlayer,
+                faceDown = faceDown,
+                onCardClick = onCardClick,
+            )
         }
     }
 }
@@ -119,22 +110,30 @@ private fun BoxWithConstraintsScope.GridHandContent(
 ) {
     val topRow = cards.take(TopRowSize)
     val bottomRow = cards.drop(TopRowSize)
+    val fullHandSize = gridCardSize(topCount = TopRowSize, bottomCount = 2)
     val cardSize = gridCardSize(
         topCount = topRow.size,
         bottomCount = bottomRow.size,
-    ).coerceAtMost(gridCardSize(topCount = TopRowSize, bottomCount = 2))
+    ).coerceAtMost(fullHandSize)
     val nudgeX = nudgeTowardBoard(player, HandLayout.GridThreeTwo)
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center,
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(HandGap),
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterVertically),
-        ) {
+        HandRow(
+            cards = topRow,
+            player = player,
+            selectedCardId = selectedCardId,
+            isCurrentPlayer = isCurrentPlayer,
+            cardSize = cardSize,
+            faceDown = faceDown,
+            nudgeX = nudgeX,
+            onCardClick = onCardClick,
+        )
+        if (bottomRow.isNotEmpty()) {
             HandRow(
-                cards = topRow,
+                cards = bottomRow,
                 player = player,
                 selectedCardId = selectedCardId,
                 isCurrentPlayer = isCurrentPlayer,
@@ -143,18 +142,6 @@ private fun BoxWithConstraintsScope.GridHandContent(
                 nudgeX = nudgeX,
                 onCardClick = onCardClick,
             )
-            if (bottomRow.isNotEmpty()) {
-                HandRow(
-                    cards = bottomRow,
-                    player = player,
-                    selectedCardId = selectedCardId,
-                    isCurrentPlayer = isCurrentPlayer,
-                    cardSize = cardSize,
-                    faceDown = faceDown,
-                    nudgeX = nudgeX,
-                    onCardClick = onCardClick,
-                )
-            }
         }
     }
 }
@@ -205,16 +192,12 @@ private fun BoxWithConstraintsScope.gridCardSize(
     topCount: Int,
     bottomCount: Int,
 ): DpSize {
-    val layoutWidth = maxWidth * GridHandWidthFraction
-    val layoutHeight = maxHeight
-
     val rowCount = if (bottomCount > 0) 2 else 1
     val rowGaps = HandGap * (rowCount - 1)
-    val maxHeightPerRow = (layoutHeight - rowGaps) / rowCount
+    val maxHeightPerRow = (maxHeight - rowGaps) / rowCount
 
-    // Fit within both width and height so the block can be centered in the gutter.
-    val maxWFromWidth = rowMaxCardWidth(topCount, layoutWidth)
-    val bottomMaxW = if (bottomCount > 0) rowMaxCardWidth(bottomCount, layoutWidth) else maxWFromWidth
+    val maxWFromWidth = rowMaxCardWidth(topCount, maxWidth)
+    val bottomMaxW = if (bottomCount > 0) rowMaxCardWidth(bottomCount, maxWidth) else maxWFromWidth
     val maxWFromWidthConstraint = minOf(maxWFromWidth, bottomMaxW)
     val maxWFromHeight = maxHeightPerRow * CardAspectRatio
 
