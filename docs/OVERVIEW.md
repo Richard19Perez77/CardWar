@@ -95,9 +95,13 @@ com.rick.cardwar
 
 ### 5. Test the rules where they live
 
-`GameEngineTest` is a JVM unit test (no Robolectric, no Compose). It covers deal, orthogonal capture, no diagonal capture, equal rank does not flip, occupied center cannot be placed, unowned center *does* move a point, eight placements end the match, ties award no wins, CPU prefers a capturing move, and `List.removeAt(0)` deal (not Java 21 `removeFirst()`).
+Both suites are plain JVM unit tests — no Robolectric, no Compose, no device.
 
-If a capture feels wrong in the UI, the failing case belongs here first.
+`GameEngineTest` covers deal, orthogonal capture, no diagonal capture, equal rank does not flip, occupied center cannot be placed, unowned center *does* move a point, eight placements end the match, ties award no wins, CPU prefers a capturing move, and `List.removeAt(0)` deal (not Java 21 `removeFirst()`).
+
+`GameViewModelTest` covers the parts the engine cannot see: that an illegal tap changes nothing and stays silent, that the CPU actually moves after the human (driven by `StandardTestDispatcher` + `advanceUntilIdle` instead of a real 400ms wait), that it stays put while disabled, that a new **Start** cancels a pending CPU move, and that mute suppresses every effect. `GameSounds` is faked to count calls.
+
+If a capture feels wrong in the UI, the failing case belongs in `GameEngineTest` first. If *turn flow* feels wrong, it belongs in `GameViewModelTest`.
 
 ### 6. Compose UI standards
 
@@ -185,9 +189,11 @@ The in-app mute still gates all three. No `res/raw`, no `SoundPool.load` crash o
 
 ### Icons and launcher
 
-Sound uses Material **VolumeUp / VolumeOff** (`material-icons-extended`), tinted with primary teal.
+Sound uses **volume-up / volume-off** Material Symbols checked in as two local vector drawables, tinted with primary teal.
 
-Launcher vectors were restored after drawables were deleted: teal field + white card/spade. Adaptive icons live in `mipmap-anydpi-v26`; a layer-list fallback in `mipmap-anydpi` covers API 24–25 (`minSdk` 24).
+**Why not `material-icons-extended`?** Google stopped publishing that library and removed it from recent Material 3 releases; it also shipped every Material icon, which measurably slows builds. The documented replacement is to copy the individual vector XML you need, which for two icons is ~20 lines.
+
+Launcher vectors were restored after drawables were deleted: teal field + white card/spade. Adaptive icons live in `mipmap-anydpi-v26`, with per-density `webp` bitmaps as the API 24–25 fallback. An earlier layer-list in plain `mipmap-anydpi` was removed: `anydpi` outranks density folders, so it silently shadowed those bitmaps on exactly the versions it was meant to help.
 
 ### Java 21 `List.removeFirst()`
 
@@ -210,8 +216,8 @@ Neighbors come from `BoardSlot`, so the old CPU bugs (checking the wrong adjacen
 ## What we deliberately did not add
 
 - **Portrait-only or landscape-only lock** — the layout adapts.
-- **Hidden opponent hand vs CPU** — still open, easy to add later as a ViewModel flag.
 - **Clean “territory” scoring** (1 point per owned cell) — rejected; 5–5 capture transfer is the original design.
+- **Saving a match across process death** — `ViewModel` survives rotation, so the only loss is a background kill mid-match. A `SavedStateHandle` round-trip of `GameState` would fix it if that ever matters.
 - **Placing on center** — still illegal; center is occupied at deal.
 - **Diagonal captures** — not in the original rule.
 - **Networking / save game** — out of scope for the port.
@@ -221,9 +227,9 @@ Neighbors come from `BoardSlot`, so the old CPU bugs (checking the wrong adjacen
 
 ## How to extend it safely
 
-1. **New rule** — add a `GameAction`, handle it in `GameEngine`, add a JVM test, then wire a ViewModel method.
+1. **New rule** — add a `GameAction`, handle it in `GameEngine.reduce`, add a `GameEngineTest` case, then wire a ViewModel method that calls `dispatch`. Return the same instance for anything the rules reject.
 2. **New widget** — take `GameState` slices + lambdas; do not call the engine from a composable.
-3. **New SFX** — `GameSoundPlayer` only; ViewModel decides *when*.
-4. **Hide CPU cards** — UI concern: pass `faceDown = state.cpuOpponent` into `PlayerHand` for P2; do not change `GameState` card data.
+3. **New SFX** — add it to the `GameSounds` interface and `GameSoundPlayer`; the ViewModel decides *when*.
+4. **New tunable** — put the number in `GameRules`, not in the engine body and not in a `GameState` default.
 
 If a change needs `Context`, `R.drawable`, or `ToneGenerator` inside `GameEngine`, it is in the wrong layer.
