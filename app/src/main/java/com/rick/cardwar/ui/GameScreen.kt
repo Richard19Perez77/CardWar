@@ -117,7 +117,8 @@ fun GameScreenContent(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(),
+                                .fillMaxHeight()
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             PlayerHand(
@@ -127,9 +128,7 @@ fun GameScreenContent(
                                 isCurrentPlayer = player1Active,
                                 layout = HandLayout.GridThreeTwo,
                                 onCardClick = onCardClick,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(8.dp),
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
                         BoardGrid(
@@ -145,7 +144,8 @@ fun GameScreenContent(
                         Box(
                             modifier = Modifier
                                 .weight(1f)
-                                .fillMaxHeight(),
+                                .fillMaxHeight()
+                                .padding(horizontal = 4.dp, vertical = 8.dp),
                             contentAlignment = Alignment.Center,
                         ) {
                             PlayerHand(
@@ -156,9 +156,7 @@ fun GameScreenContent(
                                 layout = HandLayout.GridThreeTwo,
                                 faceDown = state.cpuOpponent,
                                 onCardClick = onCardClick,
-                                modifier = Modifier
-                                    .fillMaxHeight()
-                                    .padding(8.dp),
+                                modifier = Modifier.fillMaxSize(),
                             )
                         }
                     }

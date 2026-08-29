@@ -2,14 +2,15 @@ package com.rick.cardwar.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +22,8 @@ import com.rick.cardwar.game.model.PlayingCard
 
 private val HandGap = 6.dp
 private val SelectedNudge = 8.dp
+/** Fraction of gutter width used for sizing — leaves visible margin when centered. */
+private const val GridHandWidthFraction = 0.88f
 private const val TopRowSize = 3
 
 /** How a hand of cards is arranged in its slot. */
@@ -43,76 +46,114 @@ fun PlayerHand(
     modifier: Modifier = Modifier,
     faceDown: Boolean = false,
 ) {
-    val boxModifier = when (layout) {
-        HandLayout.GridThreeTwo -> modifier
-            .fillMaxHeight()
-            .wrapContentWidth()
-
-        HandLayout.Row -> modifier
-    }
-    BoxWithConstraints(boxModifier, contentAlignment = Alignment.Center) {
-        if (cards.isEmpty()) return@BoxWithConstraints
-
-        when (layout) {
-            HandLayout.Row -> {
-                val cardSize = rowCardSize(cardCount = cards.size)
-                    .coerceAtMost(rowCardSize(cardCount = 5))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterHorizontally),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    cards.forEach { card ->
-                        HandCard(
-                            card = card,
-                            player = player,
-                            selected = selectedCardId == card.id,
-                            enabled = isCurrentPlayer,
-                            size = cardSize,
-                            faceDown = faceDown,
-                            nudgeX = nudgeTowardBoard(player, layout),
-                            nudgeY = 0.dp,
-                            onClick = { onCardClick(card.id) },
-                        )
-                    }
-                }
+    when (layout) {
+        HandLayout.GridThreeTwo -> {
+            BoxWithConstraints(modifier.fillMaxSize()) {
+                if (cards.isEmpty()) return@BoxWithConstraints
+                GridHandContent(
+                    cards = cards,
+                    player = player,
+                    selectedCardId = selectedCardId,
+                    isCurrentPlayer = isCurrentPlayer,
+                    faceDown = faceDown,
+                    onCardClick = onCardClick,
+                )
             }
+        }
 
-            HandLayout.GridThreeTwo -> {
-                val topRow = cards.take(TopRowSize)
-                val bottomRow = cards.drop(TopRowSize)
-                val cardSize = gridCardSize(
-                    topCount = topRow.size,
-                    bottomCount = bottomRow.size,
-                ).coerceAtMost(gridCardSize(topCount = TopRowSize, bottomCount = 2))
-                val nudgeX = nudgeTowardBoard(player, layout)
+        HandLayout.Row -> {
+            BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+                if (cards.isEmpty()) return@BoxWithConstraints
+                RowHandContent(
+                    cards = cards,
+                    player = player,
+                    selectedCardId = selectedCardId,
+                    isCurrentPlayer = isCurrentPlayer,
+                    faceDown = faceDown,
+                    onCardClick = onCardClick,
+                )
+            }
+        }
+    }
+}
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterVertically),
-                ) {
-                    HandRow(
-                        cards = topRow,
-                        player = player,
-                        selectedCardId = selectedCardId,
-                        isCurrentPlayer = isCurrentPlayer,
-                        cardSize = cardSize,
-                        faceDown = faceDown,
-                        nudgeX = nudgeX,
-                        onCardClick = onCardClick,
-                    )
-                    if (bottomRow.isNotEmpty()) {
-                        HandRow(
-                            cards = bottomRow,
-                            player = player,
-                            selectedCardId = selectedCardId,
-                            isCurrentPlayer = isCurrentPlayer,
-                            cardSize = cardSize,
-                            faceDown = faceDown,
-                            nudgeX = nudgeX,
-                            onCardClick = onCardClick,
-                        )
-                    }
-                }
+@Composable
+private fun BoxWithConstraintsScope.RowHandContent(
+    cards: List<PlayingCard>,
+    player: PlayerId,
+    selectedCardId: Int?,
+    isCurrentPlayer: Boolean,
+    faceDown: Boolean,
+    onCardClick: (Int) -> Unit,
+) {
+    val cardSize = rowCardSize(cardCount = cards.size)
+        .coerceAtMost(rowCardSize(cardCount = 5))
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        cards.forEach { card ->
+            HandCard(
+                card = card,
+                player = player,
+                selected = selectedCardId == card.id,
+                enabled = isCurrentPlayer,
+                size = cardSize,
+                faceDown = faceDown,
+                nudgeX = nudgeTowardBoard(player, HandLayout.Row),
+                nudgeY = 0.dp,
+                onClick = { onCardClick(card.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun BoxWithConstraintsScope.GridHandContent(
+    cards: List<PlayingCard>,
+    player: PlayerId,
+    selectedCardId: Int?,
+    isCurrentPlayer: Boolean,
+    faceDown: Boolean,
+    onCardClick: (Int) -> Unit,
+) {
+    val topRow = cards.take(TopRowSize)
+    val bottomRow = cards.drop(TopRowSize)
+    val cardSize = gridCardSize(
+        topCount = topRow.size,
+        bottomCount = bottomRow.size,
+    ).coerceAtMost(gridCardSize(topCount = TopRowSize, bottomCount = 2))
+    val nudgeX = nudgeTowardBoard(player, HandLayout.GridThreeTwo)
+
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterVertically),
+        ) {
+            HandRow(
+                cards = topRow,
+                player = player,
+                selectedCardId = selectedCardId,
+                isCurrentPlayer = isCurrentPlayer,
+                cardSize = cardSize,
+                faceDown = faceDown,
+                nudgeX = nudgeX,
+                onCardClick = onCardClick,
+            )
+            if (bottomRow.isNotEmpty()) {
+                HandRow(
+                    cards = bottomRow,
+                    player = player,
+                    selectedCardId = selectedCardId,
+                    isCurrentPlayer = isCurrentPlayer,
+                    cardSize = cardSize,
+                    faceDown = faceDown,
+                    nudgeX = nudgeX,
+                    onCardClick = onCardClick,
+                )
             }
         }
     }
@@ -164,39 +205,34 @@ private fun BoxWithConstraintsScope.gridCardSize(
     topCount: Int,
     bottomCount: Int,
 ): DpSize {
+    val layoutWidth = maxWidth * GridHandWidthFraction
+    val layoutHeight = maxHeight
+
     val rowCount = if (bottomCount > 0) 2 else 1
     val rowGaps = HandGap * (rowCount - 1)
-    val maxHeightPerRow = (maxHeight - rowGaps) / rowCount
+    val maxHeightPerRow = (layoutHeight - rowGaps) / rowCount
 
-    // Size from height first so the 3+2 block stays compact and can sit centered
-    // in the landscape gutter between the screen edge and the board.
-    var height = maxHeightPerRow
-    var width = height * CardAspectRatio
+    // Fit within both width and height so the block can be centered in the gutter.
+    val maxWFromWidth = rowMaxCardWidth(topCount, layoutWidth)
+    val bottomMaxW = if (bottomCount > 0) rowMaxCardWidth(bottomCount, layoutWidth) else maxWFromWidth
+    val maxWFromWidthConstraint = minOf(maxWFromWidth, bottomMaxW)
+    val maxWFromHeight = maxHeightPerRow * CardAspectRatio
 
-    val topRowWidth = rowContentWidth(width, topCount)
-    val bottomRowWidth = if (bottomCount > 0) rowContentWidth(width, bottomCount) else 0.dp
-    val handWidth = maxOf(topRowWidth, bottomRowWidth)
+    var width = minOf(maxWFromWidthConstraint, maxWFromHeight)
+    var height = width / CardAspectRatio
 
-    if (handWidth > maxWidth) {
-        val topMaxW = rowMaxCardWidth(topCount)
-        val bottomMaxW = if (bottomCount > 0) rowMaxCardWidth(bottomCount) else topMaxW
-        val maxWidthPerCard = minOf(topMaxW, bottomMaxW)
-        height = minOf(maxHeightPerRow, maxWidthPerCard / CardAspectRatio)
+    if (height > maxHeightPerRow) {
+        height = maxHeightPerRow
         width = height * CardAspectRatio
     }
 
     return DpSize(width, height)
 }
 
-private fun rowContentWidth(cardWidth: Dp, cardCount: Int): Dp {
-    if (cardCount <= 0) return 0.dp
-    return cardWidth * cardCount + HandGap * (cardCount - 1)
-}
-
-private fun BoxWithConstraintsScope.rowMaxCardWidth(cardCount: Int): Dp {
-    if (cardCount <= 0) return maxWidth
+private fun rowMaxCardWidth(cardCount: Int, rowWidth: Dp): Dp {
+    if (cardCount <= 0) return rowWidth
     val gaps = HandGap * (cardCount - 1)
-    return (maxWidth - gaps) / cardCount
+    return (rowWidth - gaps) / cardCount
 }
 
 private fun DpSize.coerceAtMost(max: DpSize): DpSize {
