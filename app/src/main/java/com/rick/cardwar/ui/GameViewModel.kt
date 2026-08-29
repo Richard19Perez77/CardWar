@@ -102,7 +102,6 @@ class GameViewModel(
     override fun onCleared() {
         cpuJob?.cancel()
         sounds.release()
-        super.onCleared()
     }
 
     private companion object {
