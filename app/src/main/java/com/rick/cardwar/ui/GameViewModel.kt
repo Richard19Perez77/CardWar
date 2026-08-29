@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 class GameViewModel(
     private val sounds: GameSounds = GameSoundPlayer(),
@@ -86,7 +87,7 @@ class GameViewModel(
         if (!isCpuTurn(_state.value)) return
 
         cpuJob = viewModelScope.launch {
-            delay(CpuTurnDelayMs)
+            delay(CPU_DELAY.milliseconds)
             val current = _state.value
             if (!isCpuTurn(current)) return@launch
             val move = CpuAi.chooseMove(current) ?: return@launch
@@ -105,6 +106,6 @@ class GameViewModel(
     }
 
     private companion object {
-        const val CpuTurnDelayMs = 400L
+        const val CPU_DELAY = 400L
     }
 }
