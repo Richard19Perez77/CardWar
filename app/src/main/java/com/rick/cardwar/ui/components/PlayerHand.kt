@@ -47,6 +47,7 @@ fun PlayerHand(
         when (layout) {
             HandLayout.Row -> {
                 val cardSize = rowCardSize(cardCount = cards.size)
+                    .coerceAtMost(rowCardSize(cardCount = 5))
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(HandGap, Alignment.CenterHorizontally),
                     verticalAlignment = Alignment.CenterVertically,
@@ -73,7 +74,7 @@ fun PlayerHand(
                 val cardSize = gridCardSize(
                     topCount = topRow.size,
                     bottomCount = bottomRow.size,
-                )
+                ).coerceAtMost(gridCardSize(topCount = TopRowSize, bottomCount = 2))
                 val nudgeX = nudgeTowardBoard(player, layout)
 
                 Column(
@@ -172,6 +173,12 @@ private fun BoxWithConstraintsScope.rowMaxCardWidth(cardCount: Int): Dp {
     if (cardCount <= 0) return maxWidth
     val gaps = HandGap * (cardCount - 1)
     return (maxWidth - gaps) / cardCount
+}
+
+private fun DpSize.coerceAtMost(max: DpSize): DpSize {
+    if (width <= max.width && height <= max.height) return this
+    val scale = minOf(max.width / width, max.height / height)
+    return DpSize(width * scale, height * scale)
 }
 
 private fun nudgeTowardBoard(player: PlayerId, layout: HandLayout): Dp = when (layout) {
