@@ -1,4 +1,4 @@
-# CardWAR
+# CardWAR!
 
 A two-player capture card game for Android. Place cards on a 3×3 board, flip weaker neighbors, and win the match by outscoring your opponent after eight turns.
 
