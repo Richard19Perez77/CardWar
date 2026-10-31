@@ -4,6 +4,9 @@ A two-player capture card game for Android. Place cards on a 3×3 board, flip we
 
 This project is a **Compose rewrite** of an older **Eclipse-era Java** game. The original lived in a single giant `MainActivity`, targeted tablets in landscape only, and carried a few rule bugs in the capture logic. It was rebuilt here with **[Cursor](https://cursor.com)** — I described what I wanted, iterated on the results, and shaped the final app through that back-and-forth.
 
+Working with the Cursor IDE it says the odds are heavily against the player mostly, but I found human's can win with creativity versus the simple PC algorithm and clear 50% or more easily but losses can get a bit lop-sided at times. I have yet to really win 10-0 in games or anything near that mark. I think the Cursor IDE doesn't take into account human creativity even in this concise game. Will explore more gaming variations one day. Enjoy if you find this!
+
+
 ---
 
 ## How to play
