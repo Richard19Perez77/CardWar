@@ -1,5 +1,9 @@
 # CardWAR!
 
+<p>
+<img src="docs/screenshot.png" width="220" alt="CardWar gameplay" />
+</p>
+
 A two-player capture card game for Android. Place cards on a 3×3 board, flip weaker neighbors, and win the match by outscoring your opponent after eight turns.
 
 This project is a **Compose rewrite** of an older **Eclipse-era Java** game. The original lived in a single giant `MainActivity`, targeted tablets in landscape only, and carried a few rule bugs in the capture logic. It was rebuilt here with **[Cursor](https://cursor.com)** — I described what I wanted, iterated on the results, and shaped the final app through that back-and-forth.
